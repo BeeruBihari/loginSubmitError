@@ -13,12 +13,11 @@ import {
 
 } from "react-native";
 import { Container, Spinner, Button,Text, Item,Input,CheckBox,Body} from 'native-base';
-import { Permissions, Notifications } from 'expo';
 import {createDrawerNavigator,DrawerItems, SafeAreaView,createStackNavigator,NavigationActions } from 'react-navigation';
 import Icon  from 'react-native-vector-icons/MaterialCommunityIcons';
 import { } from 'react-native-elements'
+import Global from "../../constants/Global";
 
-import Global from '../../constants/Global';
 const {height,width} = Dimensions.get('window');
 export default class MainScreen extends Component {
     constructor(props){
@@ -55,43 +54,7 @@ export default class MainScreen extends Component {
         })
     }
 
-    //generating notification token
-    generateToken = async() => {
 
-        try{
-            //const PUSH_ENDPOINT = 'https://3day.000webhostapp.com/run_query.php';
-          
-            const { status: existingStatus } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
-        
-            let finalStatus = existingStatus;
-          
-            // only ask if permissions have not already been determined, because
-            // iOS won't necessarily prompt the user a second time.
-            if (existingStatus !== 'granted') {
-              // Android remote notification permissions are granted during the app
-              // install, so this will only ask on iOS
-              const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
-              finalStatus = status;
-            }
-          
-            // Stop here if the user did not grant permissions 
-            if (finalStatus !== 'granted') {
-               
-              return;
-            }
-          
-            // Get the token that uniquely identifies this device
-           let token1 = await Notifications.getExpoPushTokenAsync();
-           console.log("En token value ",token1);
-           this.setState({token:token1})
-           console.log('Token Seted')
-        }
-        catch(error){
-            console.log(error);
-            console.log('Error in token Generation.');
-        }
-
-    }
     // handle login 
     _retrieveData = async () => {
         try {
@@ -103,7 +66,8 @@ export default class MainScreen extends Component {
                     this.setState({
                         login_status: true
                     });
-                }               
+                }
+                
             }
         } catch (error) {
             this.setState({
@@ -138,11 +102,14 @@ export default class MainScreen extends Component {
     }
     submitLogin = () =>{
 
+
         if(this.state.email_or_phone.trim().length == 0 || this.state.password.length == 0 ){
             alert("Enter Email and Password first")
             return;
         }
         
+
+
         // now sending request to login
         var connectionInfoLocal = '';
         NetInfo.getConnectionInfo().then((connectionInfo) => {
@@ -171,12 +138,13 @@ export default class MainScreen extends Component {
                 body: JSON.stringify({
                     email:username,
                     password:password,
-                    user_type:'worker'
+                    user_type:'shop',
+                    noti_token:Date()+"",
+
                 })
             }).then((response) => response.json())
             .then((responseJson) => {
                 console.log(responseJson);
-                
                 if(responseJson.error != undefined){
                     if(responseJson.error== "Unauthorised"){
                         this.setState({submitButtonDisable:false});
@@ -184,6 +152,7 @@ export default class MainScreen extends Component {
                         return;
                     }
                     alert("Internal Server error 5004");
+                    
                     this.setState({submitButtonDisable:false});
                     return;
                 }
@@ -204,8 +173,8 @@ export default class MainScreen extends Component {
                 
                     console.log("resp:",itemsToSet);
                 }).catch((error) => {
-                    alert("slow network");
                     console.log("on error featching:"+error);
+                    alert("slow network");
                     this.setState({submitButtonDisable:false});
             });
         }
@@ -215,7 +184,7 @@ export default class MainScreen extends Component {
     _signInAsync = async (token,profileData,userID) => {
         userID = userID + "";//converting to string
         console.log("setting token");
-        await AsyncStorage.setItem('userToken', token);
+        await AsyncStorage.setItem('userToken_shop', token);
         console.log("setting user data");
         await AsyncStorage.setItem('userID', userID);
 
@@ -288,7 +257,8 @@ export default class MainScreen extends Component {
                     'password':password,
                     'c_password':c_password,
                     'phone':phone,
-                    'user_type':'worker'
+                    'user_type':'shop',
+                    'noti_token':Date()+"",
 
                 })
             }).then((response) => response.json())
