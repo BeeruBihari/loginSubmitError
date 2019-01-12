@@ -11,6 +11,7 @@ import { createStackNavigator, createSwitchNavigator } from 'react-navigation';
 
 import MainTabNavigator from '../../src/Mainmenu';
 import MainScreen from '../screens/Auth/MainScreen';
+import Data from '../screens/Auth/DataAdding';
 
 class AuthLoadingScreen extends React.Component {
   static navigationOptions = {
@@ -23,7 +24,7 @@ class AuthLoadingScreen extends React.Component {
 
   // Fetch the token from storage then navigate to our appropriate place
   _bootstrapAsync = async () => {
-    const userToken = await AsyncStorage.getItem('userToken_shop');
+    const userToken = await AsyncStorage.getItem('userToken_shop1');
 
     // This will switch to the App screen or Auth screen and this loading
     // screen will be unmounted and thrown away.
@@ -60,6 +61,15 @@ const AppStack = createStackNavigator({
   },
 });
 
+const AddData = createStackNavigator({ 
+  Data1: {
+    screen:Data,
+    navigationOptions:{
+      header:null,
+    }
+  },
+});
+
 const AuthStack = createStackNavigator({ 
   SignIn:{
     screen:MainScreen,
@@ -89,6 +99,13 @@ export default createSwitchNavigator(
         header:null,
       }
     },
+    Data: {
+      screen:AddData,
+      navigationOptions:{
+        header:null,
+      }
+    },
+
   },
   { 
     initialRouteName: 'AuthLoading',

@@ -7,6 +7,8 @@ import { Text,Image,View,StyleSheet,ScrollView,Button ,
 } from 'react-native';
 
 import { CheckBox,Rating } from 'react-native-elements';
+import Global from '../../common/constants/Global'; 
+
 
 import Connection from "../connection";
 
@@ -36,8 +38,10 @@ export default class RecievedDetails extends React.Component{
             isEmpty:'Wait List is Loading.....',
             refreshing:false,
             BtnStatus:'Packing..',
+            BtnStatus1:'Deliver..',
             ratingValue:rating,
-            feedback:feedback
+            feedback:feedback,
+            image:'',
         }
         console.log('Orderd Product List Called.');
         this.conn = new Connection();
@@ -55,12 +59,13 @@ export default class RecievedDetails extends React.Component{
             this.setState({refreshing:true});
             console.log(" Id : ",this.state.id);
             let sql = "SELECT unit_tab.unit_name,GR.gro_quantity,GR.real_price,GR.offer_price, M.menu_name,GP.gro_product_name,GP.pic "+
-                    ", GR.order_status,GR.gro_order_id from gro_map_tab As GM "+
-                    "INNER JOIN unit_tab On unit_tab.unit_id = GM.unit_id "+
-                    "INNER JOIN gro_menufacture_tab As M ON M.menu_id = GM.menu_id "+
-                    "INNER JOIN gro_product_list_tab As GP ON GP.gro_product_list_id = GM.gro_produt_list_id "+
-                    "INNER JOIN gro_order_tab As GR On GR.gro_map_id = GM.gro_map_id "+
-                    "WHERE GR.gro_cart_id = "+this.state.id+";";
+            ", GR.order_status,GR.gro_order_id,GPS.gro_price,GPS.quantity from gro_map_tab As GM "+ 
+            "INNER JOIN gro_menufacture_tab As M ON M.menu_id = GM.menu_id "+ 
+            "INNER JOIN gro_product_list_tab As GP ON GP.gro_product_list_id = GM.gro_produt_list_id "+ 
+            "INNER JOIN gro_product_shop_tab As GPS ON GPS.gro_map_id = GM.gro_map_id "+ 
+            "INNER JOIN gro_order_tab As GR On GR.gro_map_id = GM.gro_map_id "+ 
+            "INNER JOIN unit_tab On unit_tab.unit_id = GPS.unit_id "+ 
+            "WHERE GR.gro_cart_id ="+this.state.id+";";
             //console.log(sql);
             const value = await this.conn.Query1(sql);
 
@@ -92,11 +97,24 @@ export default class RecievedDetails extends React.Component{
             //console.log(value);
 
             this._cacheData();
-
         }
         catch(error){
             console.log(error);
         }
+        // console.log(status);
+        // let data1 = this.state.data1.map((el) => {
+            
+        //     (el.gro_order_id == id) ?
+        //         (status == "0") ?
+        //            el.order_status = "1"
+        //         :
+        //             el.order_status = "0"
+        //     : el;
+        //    // console.log(el.order_status);
+        // })
+
+        // console.log(data1);
+        // //this.setState({data1: markers });
     }
 
     done = async() => {        
@@ -124,32 +142,78 @@ export default class RecievedDetails extends React.Component{
         }
     }
 
+    done1 = async() => {        
+        try{    
+            let sql = "UPDATE gro_cart_tab SET status = '2' WHERE gro_cart_id='"+this.state.id+"'";
+
+            const value = await this.conn.Query1(sql);
+            this.setState({BtnStatus1:'Delivered.'})
+            //console.log(sql);
+        }
+        catch(error){
+            console.log(error);
+        }
+    }
+
+    updateBalance = async() => {
+
+        var real = this.state.total;
+        var paid = this.state.paid;
+        if(real >= paid){
+            var sql = "UPDATE gro_cart_tab SET paid_amt = "+paid+" WHERE gro_cart_id='"+this.state.id+"'";
+            const value = await this.conn.Query1(sql);
+            //this.setState({paid:this.paid});
+            console.log(value);
+        }
+        else
+         alert("invalid amount inputed");
+         console.log("paid",paid);
+    }
+    setImage = async(path) => {
+        this.setState({image:{uri:Global.PIC_URL+path}})
+        console.log(Global.PIC_URL+path);
+    }
+
+    onError1 = async() =>{
+        this.setState({image:require("../../Image/product.png")});
+    }
+
     render(){
         //Setting data in flat list
         viewData1 = (item) =>{
-        //    console.log("status : "+ item.order_status + " result :"+ (item.order_status=='1') ? true : false);
+        //this.setImage(item.pic);
             return(
                 <View style={styles.tabIteam} >
                     <View style={{flexDirection:'row' }}>
                         <View style={{flex:1}}>
                             <Image
                                 style={styles.Img}
-                                source={require('./link2.jpg')}
+                                source={{uri:Global.PIC_URL+item.pic}}
                             />
-                        </View>    
-                        <View style={{flex:1}}>
+                        </View>
+                        {(this.state.status == "0") ?
+                            <View style={{flex:2,flexDirection:'row'}}>
+                                <View style={{flex:1}}>
+                                    <Text style={{fontSize:18,color:'red',textAlign:'center'}}>{item.gro_product_name}</Text>
+                                    <Text style={{fontSize:14,textAlign:'center'}}>Unit:{item.gro_quantity} ({item.gro_price}/{item.unit_name}) </Text>
+                                    <Text style={{fontSize:14,textAlign:'center'}}>{item.menu_name}</Text>
+                                </View>
+                                <View style={{flex:1}}>
+                                    <CheckBox
+                                        center
+                                        size = {20}
+                                        checked={(item.order_status == '0') ? false : true}
+                                        onPress = {() => this.approved(item.gro_order_id,item.order_status)}   
+                                    />
+                                </View>
+                            </View>       
+                        :
+                        <View style={{flex:3}}>
                             <Text style={{fontSize:18,color:'red',textAlign:'center'}}>{item.gro_product_name}</Text>
                             <Text style={{fontSize:14,textAlign:'center'}}>Unit:{item.gro_quantity} ({item.gro_price}/{item.unit_name}) </Text>
                             <Text style={{fontSize:14,textAlign:'center'}}>{item.menu_name}</Text>
                         </View>
-                        <View style={{flex:1}}>
-                            <CheckBox
-                                center
-                                size = {20}
-                                checked={(item.order_status == '0') ? false : true}
-                                onPress = {() => this.approved(item.order_id,item.order_status)}   
-                            />
-                        </View>
+                        }
                     </View>
                 </View>
             );
@@ -177,14 +241,27 @@ export default class RecievedDetails extends React.Component{
                         </View>
                     </View> :
                     <Text></Text>}
+                    {(this.state.status == "1") ? <View style={{flexDirection:'row'}}>
+                        <Text style={{flex:1}}>Order Status:</Text>
+                        <View style={{flex:1}}>
+                            <Button
+                                color='green'
+                                disabled = {(this.state.BtnStatus1 == "Deliver..")? false:true}
+                                title={this.state.BtnStatus1}
+                                onPress={() => {this.done1()}}
+                            >
+                            </Button>
+                        </View>
+                    </View> :
+                    <Text></Text>}
                 </View>
                 <ScrollView
-                    height='66%'
+                    height='71%'
                 >
                     <FlatList 
                         data = {this.state.data1}
                         renderItem={({item}) => viewData1(item)}
-                        keyExtractor={item => item.order_id}
+                        keyExtractor={item => item.gro_order_id.toString()}
                         ListEmptyComponent={()=>{
                             if(this.state.isEmpty =='Wait List is Loading.....')
                                  return(<View style={{justifyContent:'center'}}>
@@ -199,25 +276,33 @@ export default class RecievedDetails extends React.Component{
                     </FlatList>
                 </ScrollView>
                 <View style={{margin:5}}>
-                    <View style={{flexDirection:'row',borderBottomColor:'black',borderBottomWidth:1}}>
-                        <Text style={{flex:2}}>Total: </Text>
-                        <Text style={{flex:1,borderLeftColor:'black',borderLeftWidth:1}}>{this.state.total} /-</Text>
-                    </View>
-                    <View style={{flexDirection:'row'}}>
-                        <Text style={{flex:2}}>Paid: </Text>
-                        <TextInput 
-                            style={{flex:1,borderLeftColor:'black',borderLeftWidth:1}}
-                            value={this.state.paid}
-                            keyboardType='numeric'
-                            underlineColorAndroid='transparent'
-                            onChangeText={() => {}}
-                        >
-                        </TextInput>
-                    </View>
+                    {(this.state.status != "2") ? 
+                        <View>
+                            <View style={{flexDirection:'row',borderBottomColor:'black',borderBottomWidth:1}}>
+                                <Text style={{flex:2}}>Total: </Text>
+                                <Text style={{flex:1,borderLeftColor:'black',borderLeftWidth:1}}>{this.state.total} /-</Text>
+                            </View>
+                            <View style={{flexDirection:'row'}}>
+                                <Text style={{flex:2}}>Paid: </Text>
+                                <TextInput 
+                                    style={{flex:1,borderLeftColor:'black',borderLeftWidth:1}}
+                                    value={this.state.paid.toString()}
+                                    keyboardType='numeric'
+                                    underlineColorAndroid='transparent'
+                                    onBlur = { (text) => this.updateBalance(text) }
+                                    onChangeText={(text) => {console.log(text); this.setState({paid:text})} }
+                                >
+                                </TextInput>
+                            </View>
+                        </View>
+                    :
+                        <Text></Text>
+                    }
                     
-                    <View style={{borderWidth:1,borderColor:'white',backgroundColor:'white',borderRadius:15,marginTop:2}}>
+                    {(this.state.status == "2") ?
+                    <View style={{borderWidth:1,borderColor:'white',backgroundColor:'white',borderRadius:15,marginTop:10}}>
                         <Text> Feedback : {this.state.feedback} </Text>
-                        {(this.state.status != "0") ? <View style={{flexDirection:'row'}}>
+                            <View style={{flexDirection:'row'}}>
                             <Text style={{flex:1}}>Rating :</Text>
                             <View style={{flex:1}}>
                             <Rating
@@ -229,9 +314,11 @@ export default class RecievedDetails extends React.Component{
                                 ratingBackgroundColor="#ebeeef"
                             />
                             </View>
-                        </View> :
-                        <Text></Text>}
-                    </View>
+                        </View>
+                        </View> 
+                        :
+                        <Text></Text>
+                    }
                 </View>
             </View>
         );

@@ -165,10 +165,10 @@ export default class MyProfile extends React.Component {
     return (
         <View>
             <ScrollView
-                height="90%"
             >
                 <KeyboardAvoidingView behavior="padding" keyboardVerticalOffset={100} enabled>
                     <View style={styles.parentContainer}>
+                        
                         <View style={styles.container}>
                             <Text style={styles.H4}>Edit your profile!</Text>
                             <Text style={{fontSize:18}}>Email: <Text style={{fontSize:22}}>{this.state.email}</Text></Text>
@@ -181,6 +181,16 @@ export default class MyProfile extends React.Component {
                                 onChangeText = {(text) => { this.setState({name:text});}}
                                 value = {this.state.name}
                             />
+                            <Text >Average:</Text>
+                                <View > 
+                                    <Rating
+                                        type="star"
+                                        fractions={1}
+                                        startingValue={4.6}
+                                        readonly
+                                        imageSize={30}
+                                    />
+                                </View>
                             <Text>City:</Text>
                             <TextInput 
                                 underlineColorAndroid='transparent' 
@@ -247,21 +257,12 @@ export default class MyProfile extends React.Component {
                                 size="large" 
                                 color="#00ff00" />
                         </View>
+                        <View>
+                            
+                        </View>
                     </View>
                 </KeyboardAvoidingView>
             </ScrollView>
-            <View style={styles.Ratting}>
-                <Text style={{flex:1,fontSize:18}}>Average:</Text>
-                <View style={{flex:1}}> 
-                    <Rating
-                        type="star"
-                        fractions={1}
-                        startingValue={4.6}
-                        readonly
-                        imageSize={30}
-                    />
-                </View>
-            </View>
         </View>
     );
   }

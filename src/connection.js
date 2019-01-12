@@ -5,17 +5,18 @@ import {
 } from "react-native";
 import {ToastAndroid} from 'react-native';
 import Global from '../common/constants/Global'; 
+import RecievedDetails from "./order/Details";
 export default class Connection {
     constructor(){
         this.state={
         } 
     }
    Query1=async (query) =>{
-      ToastAndroid.show('Wait in Process... !', ToastAndroid.SHORT);
+      //ToastAndroid.show('Wait in Process... !', ToastAndroid.SHORT);
         let value ={flag:false,
                     data:[]
                   };     
-      const userToken = await AsyncStorage.getItem('userToken');
+      const userToken = await AsyncStorage.getItem('userToken_shop');
       //console.log('User Token Global ', Global.USER_TOKEN);
       console.log("Retrive query :",query);
       await  fetch(Global.API_URL+'run_query', {
@@ -31,7 +32,7 @@ export default class Connection {
             .then((responseJson) => {
               value.flag=true;
               value.data = responseJson.data;
-              console.log(responseJson);
+              console.log("Responces RecievedDetails.",responseJson.data);
 
               if(Object.keys(value.data).length == 0){
                 value.flag = false;
@@ -42,7 +43,7 @@ export default class Connection {
                 value.flag=false;
                 value.data = "Network request failed" ==error.message?  alert("Check internet connection"):error;
             }); 
-            ToastAndroid.show('Process Complete.. !', ToastAndroid.SHORT);
+            //ToastAndroid.show('Process Complete.. !', ToastAndroid.SHORT);
           return value;
   }
 

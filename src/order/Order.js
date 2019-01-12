@@ -29,7 +29,7 @@ class OrderScreen extends React.Component{
         try{
             this.setState({refreshing:true});
             // let shop_id = '2';
-             await AsyncStorage.setItem('shop_id','1');
+             //await AsyncStorage.setItem('shop_id','1');
             let shop_id = await AsyncStorage.getItem('shop_id');
             
             console.log('Shop id:',shop_id);
@@ -46,7 +46,7 @@ class OrderScreen extends React.Component{
                 this.setState({details:value.data});                
             }
             else{
-                alert('Something Error');
+                //alert('Something Error');
                 this.setState({isEmpty:"List is empty..."})
             }
             this.setState({refreshing:false});
@@ -106,7 +106,7 @@ class OrderScreen extends React.Component{
                 <FlatList
                     data={this.state.details}
                     renderItem={({item}) => viewData1(item)}
-                    keyExtractor={item => item.gro_cart_id}
+                    keyExtractor={item => item.gro_cart_id.toString()}
                     ListEmptyComponent={()=>{
                     if(this.state.isEmpty =='Wait List is Loading.....')
                          return(<View style={{justifyContent:'center'}}>
@@ -205,7 +205,6 @@ class HistoryScreen extends React.Component{
                 </TouchableOpacity>
             );
         }
-
         return(
             <View style={styles.bgView}>
                 <ScrollView 
@@ -218,7 +217,7 @@ class HistoryScreen extends React.Component{
                 <FlatList
                     data={this.state.details}
                     renderItem={({item}) => viewData(item)}
-                    keyExtractor={item => item.gro_cart_id}
+                    keyExtractor={item => item.gro_cart_id.toString()}
                     ListEmptyComponent={()=>{
                     if(this.state.isEmpty =='Wait List is Loading.....')
                          return(<View style={{justifyContent:'center'}}>
@@ -272,7 +271,7 @@ export default RatingScreen = createStackNavigator(
         HomeScreen: {
             screen: tab,
             navigationOptions: ({ navigation }) => ({
-                headerTitle:'Rating',
+                headerTitle:'Order State',
                 headerStyle: {
                     backgroundColor: '#2874f0'
                 },

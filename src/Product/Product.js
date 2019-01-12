@@ -8,11 +8,11 @@ import { Text,Image,TouchableOpacity,View,StyleSheet,ScrollView,AsyncStorage,
     Picker,
     Button
 } from 'react-native';
-
+import Icon1  from 'react-native-vector-icons/FontAwesome'
 import PList from './PDetails';
 import AddProC from './AddNewList';
 import Connection from '../connection';
-
+import Global from '../../common/constants/Global'; 
 // Showing Product Catogory 
 
 class MenuButton extends React.Component{
@@ -36,6 +36,8 @@ class Product extends React.Component{
             data:[],
             TempData:[],
             categoryList:[],
+            categoryList1:[],
+            SubcategoryList:[],
             flag:0,
             addable:false,
             refreshing:false,
@@ -50,6 +52,7 @@ class Product extends React.Component{
     // Refreash the page on back press from Add Catogory..
     componentWillMount() {
         this.fire();
+        this.category();
     }
 
     // Query data from table 
@@ -58,15 +61,15 @@ class Product extends React.Component{
 
             this.setState({refreshing:true});
             const value1 = await AsyncStorage.getItem('shop_id');   
-            console.log("Cache Data : " , value);
+            console.log("Cache Data : " , value1);
 
-            let sql  = "SELECT GM.*,gmt.menu_name,unit_tab.unit_name,GPL.gro_product_name,GPL.pic,GC.gro_cat_name,GS.subcat_name from gro_map_tab As GM "+
+            let sql  = "SELECT GM.*,gmt.menu_name,GP.offer,unit_tab.unit_name,GPL.gro_product_name,GPL.pic,GC.gro_cat_name,GS.subcat_name from gro_map_tab As GM "+
             "INNER JOIN gro_subcat_tab As GS ON GM.gro_subcat_id = GS.gro_subcat_id "+
             "Inner JOIN gro_cat_tab As GC ON GM.gro_cat_id = GC.gro_cat_id "+
             "Inner Join unit_tab on unit_tab.unit_id = GM.unit_id "+
             "Inner Join gro_menufacture_tab AS gmt on gmt.menu_id = GM.menu_id "+
             "INNER JOIN gro_product_list_tab AS GPL ON GPL.gro_product_list_id = GM.gro_produt_list_id "+
-            "INNER JOIN gro_product_shop_tab As GP ON GM.gro_map_id = GP.gro_map_id WHERE GP.gro_shop_info_id =1;";
+            "INNER JOIN gro_product_shop_tab As GP ON GM.gro_map_id = GP.gro_map_id WHERE GP.gro_shop_info_id ="+value1;
             
             const value = await this.conn.Query1(sql);
             
@@ -76,10 +79,6 @@ class Product extends React.Component{
             }
             else{
                 console.log('Something Error');
-                if(value.data == "List is Empty")
-                {
-                    this.category();
-                }
                 this.setState({isEmpty:value.data});
             }
             this.setState({refreshing:false})   
@@ -94,19 +93,14 @@ class Product extends React.Component{
             const value1 = await AsyncStorage.getItem('shop_id');   
             console.log("Cache Data : " , value1);
 
-            let sql = "SELECT GM.*,gmt.menu_name,unit_tab.unit_name,GPL.gro_product_name,GPL.pic, GC.gro_cat_name,GS.subcat_name from gro_map_tab As GM "+
+            let sql = "SELECT GM.gro_map_id, GM.gro_subcat_id,GM.gro_cat_id, GC.gro_cat_name,GS.subcat_name from gro_map_tab As GM "+
             "INNER JOIN gro_subcat_tab As GS ON GM.gro_subcat_id = GS.gro_subcat_id "+
-            "Inner JOIN gro_cat_tab As GC ON GM.gro_cat_id = GC.gro_cat_id "+
-            "Inner Join unit_tab on unit_tab.unit_id = GM.unit_id "+
-            "Inner Join gro_menufacture_tab AS gmt on gmt.menu_id = GM.menu_id "+
-            "INNER JOIN gro_product_list_tab As GPL ON GPL.gro_product_list_id = GM.gro_produt_list_id "+
-            "WHERE GM.gro_map_id Not In ( SELECT GM.gro_map_id from gro_map_tab As GM "+
-            "INNER JOIN gro_product_shop_tab As GP ON GM.gro_map_id = GP.gro_map_id WHERE GP.gro_shop_info_id = "+value1+")";
+            "Inner JOIN gro_cat_tab As GC ON GM.gro_cat_id = GC.gro_cat_id";
 
             const value = await this.conn.Query1(sql);
             if(value.flag){
-                this.setState({data:value.data});
-                this.setState({data1:value.data});
+                this.setState({categoryList1:value.data});
+                //this.setState({data1:value.data});
                 this.setState({addable:true});
             }
             else{
@@ -117,6 +111,7 @@ class Product extends React.Component{
             console.log(error);
         }
     }
+
     AddNew = async () => {
         if(this.state.category != "Select Category"){
             if(this.state.subCategory != "Select Subcategory"){
@@ -148,19 +143,35 @@ class Product extends React.Component{
                     return itemData.indexOf(textData) > -1;    
                 }); 
                 console.log( "selected Data :",Object.keys(CNewList).length);
-                 this.setState({data1:CNewList});
+                if(!Object.keys(CNewList).length){
+                    await this.setState({data1:CNewList});
+                    this.setState({isEmpty:'List is Empty'});       
+                }
+                else{
+                    await this.setState({data1:CNewList}); 
+                }
                  this.setState({TempData:CNewList});
-               
+                 
+                 
+                const CNewList1  = this.state.categoryList1.filter(item => {      
+                    const itemData = `${item.gro_cat_name.toUpperCase()}`;
+                    const textData = itemValue.toUpperCase();
+                    return itemData.indexOf(textData) > -1;    
+                }); 
+                console.log( "selected Data :",Object.keys(CNewList1).length);
+                 this.setState({SubcategoryList:CNewList1});
             }
             else
             {
-                this.setState({data1:this.state.data});
+                if(this.state.isEmpty != 'List is Empty'){
+                    this.setState({data1:this.state.data});
+                }
                 console.log('Data Showing.');
             }
         }
     
         ChangeUpdate = async(data) =>{
-            console.log('Sub Category....... ',data);
+            //console.log('Sub Category....... ',data);
             await this.setState({subCategory:data});
             if(data != "Select Subcategory"){
                  const CNewList1  = await this.state.TempData.filter(item => {      
@@ -169,49 +180,56 @@ class Product extends React.Component{
                         return itemData.indexOf(textData) > -1;    
                 });
                 console.log( "selected Data in Subcategory :",Object.keys(CNewList1).length);
-                await this.setState({data1:CNewList1});       
+                if(Object.keys(CNewList1).length){
+                    await this.setState({data1:CNewList1});       
+                }
+                else{
+                    this.setState({isEmpty:'List is Empty'});
+                    await this.setState({data1:CNewList1});
+                }
             }
             else{
-                console.log(this.state.TempData);
+                //console.log(this.state.TempData);
                 console.log('Error');
-               
-                await this.setState({data1:this.state.TempData});
+                if(this.state.isEmpty != 'List is Empty'){
+                    await this.setState({data1:this.state.TempData});
+                }
             }        
         }
 
         viewData = (item) =>{
-            //console.log(item.subcategory_id);
-            return(<View style={styles.tabIteam}>
+            console.log(item.offer);
+            return(
+                <TouchableOpacity
+                    style={styles.tabIteam}
+                    onPress={() => this.props.navigation.navigate('PList',{
+                        data:[item],
+                        add:false,                   
+                    }) }
+                >
                     <View style={{flexDirection:'column' }}>
                         <View style={{flex:1}}>
-                        <Image
-                            style={styles.Img}
-                            source={{uri: `data:image/jpeg;base64,${item.pic_1}`}}
-                        />
+                        
+                            <Image
+                                style={styles.Img}
+                                source={{uri:Global.PIC_URL+item.pic}}
+                            />
                         </View>    
                         <View style={{flex:1}}>
-                            <Text style={{fontSize:18,color:'red',textAlign:'center'}}>{item.gro_product_name}</Text>
-                            <Text style={{fontSize:14,textAlign:'center'}}>Price :{item.price}  {item.quantity}{item.unit_name}</Text>
-                            <Text style={{fontSize:14,textAlign:'center',color:'green'}}>{item.menu_name}</Text>
-                            <View >
-                            <Button 
-                                onPress={() => this.props.navigation.navigate('PList',{
-                                    data:[item],
-                                    add:false,                   
-                                }) }
-                                title="Edit"
-                            /> 
-                            </View>
+                            <Text style={{fontSize:20}}>{item.gro_product_name}</Text>
+                            <Text style={{fontSize:16}}><Icon1 name="rupee" style={{color:'black',fontSize:15}}/> {item.price}  {item.quantity}{item.unit_name}   <Text style={{color:'green'}}>{item.offer}% off</Text></Text>
+                            <Text style={{fontSize:18}}>{item.menu_name}</Text>
                         </View>
                     </View>
-                </View>);
+                </TouchableOpacity>
+                );
         }
         
         let categoryItem = [];
         let SubcategoryItem = [];
     
         const CList = []; 
-        for(let value of this.state.data){
+        for(let value of this.state.categoryList1){
             //console.log(value.category_name);
             CList.push(value.gro_cat_name);
         }  
@@ -226,7 +244,7 @@ class Product extends React.Component{
         // console.log('-----------------------------------------------');            
         
         
-        const SCList = this.state.TempData.filter(item => {      
+        const SCList = this.state.SubcategoryList.filter(item => {      
             const itemData = `${item.gro_cat_name.toUpperCase()}`;
                 const textData = this.state.category.toUpperCase();
                 return itemData.indexOf(textData) > -1;    
@@ -315,8 +333,18 @@ export default RootStack = createStackNavigator(
                 headerLeft: <MenuButton obj={navigation}  />,
             }),
         },
-        PList:{screen:PList},
-        AddNPC:{screen:AddProC},
+        PList:{
+            screen:PList,
+            navigationOptions: ({ navigation }) =>({
+                headerTitle:'Update Product',
+            }),
+        },
+        AddNPC:{
+            screen:AddProC,
+            navigationOptions: ({ navigation }) =>({
+                headerTitle:'Add New Product',
+            }),
+        },
     },
     {
         initialRouteName: 'product',
@@ -348,19 +376,18 @@ let styles = StyleSheet.create({
         backgroundColor:'white',
         borderRadius:3,
         width:'49%',
-        margin:0.5,
+        margin:1,
         padding:5,
         elevation: 3,
     },
     Img : {
         flex:1,
-        height:100,
+        height:120,
         alignItems: 'center',
         marginLeft:'5%',
         marginTop:'5%',
         marginRight:'5%',
         width:'90%',
-        borderRadius:50,
         borderWidth:0.3,
     },
     container: {

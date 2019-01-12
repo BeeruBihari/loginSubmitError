@@ -1,11 +1,11 @@
 import React from 'react';
-import {StyleSheet,Text,View,ScrollView,Image,TouchableOpacity } from 'react-native';
+import {StyleSheet,Text,View,ScrollView,AsyncStorage,TouchableOpacity, BackAndroid} from 'react-native';
 import {createDrawerNavigator,DrawerItems, SafeAreaView ,createStackNavigator} from 'react-navigation';
 import Icon  from 'react-native-vector-icons/MaterialCommunityIcons';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 
 import Order from './order/Order';
-import Profile from './MyProfile';
+import Profile from './EditProfile';
 import Rating from './RatingScreen'
 import Product from './Product/Product';
 class MenuButton extends React.Component{
@@ -20,9 +20,18 @@ class MenuButton extends React.Component{
 	}
 }
 
-class App2 extends React.Component{
+class Logout extends React.Component{
+    appExit = async() => {
+        await AsyncStorage.setItem('userToken_shop',"");
+        BackAndroid.exitApp();
+    }
     render(){
-        return(<View></View>);
+        this.appExit();
+        return(
+            <View>
+                <Text>Exit</Text>
+            </View>
+        )
     }
 }
 
@@ -86,7 +95,13 @@ export default AppDrawerNavigator = createDrawerNavigator({
 		navigationOptions: {
 				drawerIcon: ({ tintColor }) => (<Icon name="star" size={24} style={{ color: tintColor }} />),
 		}
-	},
+    },
+    // Logout: {
+	// 	screen: Logout,
+	// 	navigationOptions: {
+	// 			drawerIcon: ({ tintColor }) => (<Icon name="star" size={24} style={{ color: tintColor }} />),
+	// 	}
+	// },
 },{
     initialRouteName:'Order',
 	//contentComponent:CustomDrawerContentComponent,
